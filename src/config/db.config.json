@@ -1,0 +1,12 @@
+{
+    "development": {
+      "database": {
+        "username": "postgres",
+        "password": "postgres",
+        "db_name": "ticket_booking",
+        "host": "localhost",
+        "dialect": "postgresql",
+        "logging": false
+      }
+    }
+}

@@ -1,0 +1,189 @@
+openapi: 3.0.1
+info:
+  title: Ticket Management API
+  version: 1.0.0
+  description: API documentation for Ticket CRUD operations
+
+servers:
+  - url: http://localhost:3000
+    description: Local server
+
+tags:
+  - name: Tickets
+    description: Ticket management APIs
+
+components:
+  schemas:
+    Ticket:
+      type: object
+      required:
+        - eventId
+        - noOfTickets
+        - price
+      properties:
+        eventId:
+          type: integer
+          description: Event ID to which the ticket belongs
+        noOfTickets:
+          type: integer
+          description: Number of tickets booked/purchased
+        price:
+          type: number
+          format: double
+          description: Price per ticket
+      example:
+        eventId: 2
+        noOfTickets: 4
+        price: 99.99
+
+paths:
+  /tickets:
+    post:
+      summary: Create a new ticket
+      tags: [Tickets]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Ticket"
+      responses:
+        "201":
+          description: Ticket created successfully
+        "400":
+          description: Invalid input
+
+    get:
+      summary: Get all tickets
+      tags: [Tickets]
+      responses:
+        "200":
+          description: List of all tickets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Ticket"
+
+  /tickets/{id}:
+    get:
+      summary: Get ticket by ID
+      tags: [Tickets]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Ticket ID
+      responses:
+        "200":
+          description: Ticket details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Ticket"
+        "404":
+          description: Ticket not found
+
+    put:
+      summary: Update ticket by ID
+      tags: [Tickets]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Ticket ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Ticket"
+      responses:
+        "200":
+          description: Ticket updated successfully
+        "404":
+          description: Ticket not found
+
+    delete:
+      summary: Delete ticket by ID
+      tags: [Tickets]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Ticket ID
+      responses:
+        "200":
+          description: Ticket deleted successfully
+        "404":
+          description: Ticket not found
+
+  /tickets/export/excel:
+    post:
+      summary: Export Excel Of Tickets
+      tags: [Tickets]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - filter
+                - sort
+              properties:
+                filter:
+                  type: object
+                  example: { ids: [1], eventIds: [6] }
+                sort:
+                  type: object
+                  example: { sortBy: "id", orderBy: "ASC" }
+      responses:
+        "200":
+          description: Successful response - returns an Excel file
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+        "400":
+          description: Bad Request - The request is invalid or missing required parameters
+        "404":
+          description: Not Found - No data available for the requested criteria
+        "500":
+          description: Internal Server Error - Something went wrong on the server side
+
+  /tickets/filter:
+    post:
+      summary: Tickets List With Filter
+      tags: [Tickets]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              required:
+                - filter
+                - sort
+                - page
+              properties:
+                filter:
+                  type: object
+                  example: { ids: [1], eventIds: [6] }
+                sort:
+                  type: object
+                  example: { sortBy: "id", orderBy: "ASC" }
+                page:
+                  type: object
+                  example: { pageNumber: 0, pageLimit: 10 }
+      responses:
+        "200":
+          description: Success
+        "404":
+          description: Success
