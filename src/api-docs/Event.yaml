@@ -168,7 +168,7 @@ paths:
                       inActive: false,
                       month: 11,
                       year: 2025,
-                      seach: "conference"
+                      seach: "conference",
                     }
                 sort:
                   type: object

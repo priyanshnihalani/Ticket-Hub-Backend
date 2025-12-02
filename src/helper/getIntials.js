@@ -3,9 +3,9 @@ const getInitials = (name = "") => {
         .trim()
         .split(" ")
         .filter(Boolean)
-        .map(word => word[0].toUpperCase())
+        .map((word) => word[0].toUpperCase())
         .slice(0, 2)
         .join("");
 };
 
-module.exports = getInitials
+module.exports = getInitials;

@@ -2,20 +2,19 @@ const {
     getInvalidRequestResponse,
     getNotFoundResponse,
     getUnAuthorizeResponse,
-    getInternalServerErrorResponse
+    getInternalServerErrorResponse,
 } = require("./Response");
 
 const ResponseManager = require("./ResponseManager");
 
-const { 
+const {
     InvalidRequestException,
     NotFoundException,
     UnAuthorizeException,
-    BaseError
+    BaseError,
 } = require("./Exception");
 
 module.exports = (err, req, res, next) => {
-
     console.error("ERROR:", err);
 
     // Validation / Bad Request
@@ -23,7 +22,7 @@ module.exports = (err, req, res, next) => {
         return ResponseManager.send(
             res,
             getInvalidRequestResponse(err.message),
-            null
+            null,
         );
     }
 
@@ -32,7 +31,7 @@ module.exports = (err, req, res, next) => {
         return ResponseManager.send(
             res,
             getNotFoundResponse(err.message),
-            null
+            null,
         );
     }
 
@@ -41,14 +40,10 @@ module.exports = (err, req, res, next) => {
         return ResponseManager.send(
             res,
             getUnAuthorizeResponse(err.message),
-            null
+            null,
         );
     }
 
     // Fallback Internal Error
-    return ResponseManager.send(
-        res,
-        getInternalServerErrorResponse(),
-        null
-    );
+    return ResponseManager.send(res, getInternalServerErrorResponse(), null);
 };
