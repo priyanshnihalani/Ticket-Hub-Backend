@@ -7,16 +7,16 @@ const { InvalidRequestException } = require("../utils/Exception");
 const { getPaginationResponse } = require("../utils/Response");
 
 class UserRepository {
-
     // Create User (with duplicate check)
     async addUser(data) {
-
         const existingUser = await User.findOne({
-            where: { email: data.email, softDelete: false }
+            where: { email: data.email, softDelete: false },
         });
 
         if (existingUser) {
-            throw new InvalidRequestException("User already exists with this email");
+            throw new InvalidRequestException(
+                "User already exists with this email",
+            );
         }
 
         return await User.create(data);
@@ -25,7 +25,7 @@ class UserRepository {
     // Get user for login by email
     async loginUser(email) {
         return await User.findOne({
-            where: { email, softDelete: false }
+            where: { email, softDelete: false },
         });
     }
 
@@ -42,11 +42,17 @@ class UserRepository {
                         {
                             model: Event,
                             as: "event",
-                            attributes: ["id", "title", "date", "time", "price"]
-                        }
-                    ]
-                }
-            ]
+                            attributes: [
+                                "id",
+                                "title",
+                                "date",
+                                "time",
+                                "price",
+                            ],
+                        },
+                    ],
+                },
+            ],
         });
 
         if (!user) return null;
@@ -56,15 +62,15 @@ class UserRepository {
         return {
             ...user.dataValues,
             initials: getInitials(user.name),
-            totalBookings:  tickets.filter(t => !t.softDelete).length,
-            cancelledBookings: tickets.filter(t => t.softDelete).length
+            totalBookings: tickets.filter((t) => !t.softDelete).length,
+            cancelledBookings: tickets.filter((t) => t.softDelete).length,
         };
     }
 
     // Fetch user only by email (reusable for validation)
     async getUserByEmail(email) {
         return await User.findOne({
-            where: { email, softDelete: false }
+            where: { email, softDelete: false },
         });
     }
 
@@ -72,39 +78,29 @@ class UserRepository {
     async updateUserById(id, data) {
         return await User.update(data, {
             where: { id },
-            returning: true
+            returning: true,
         });
     }
 
     // Soft Delete
     async deleteUserById(id) {
-        return await User.update(
-            { softDelete: true },
-            { where: { id } }
-        );
+        return await User.update({ softDelete: true }, { where: { id } });
     }
 
     // Get all users
     async getAllUsers() {
         return await User.findAll({
-            where: { softDelete: false }
+            where: { softDelete: false },
         });
     }
 
     // Filter / Sort / Pagination
     async getUserListByFilterSort(filter = {}, sort = {}, page = {}) {
-
         const whereClause = this.buildWhereClause(filter);
 
-        const {
-            sortBy = "id",
-            orderBy = "ASC"
-        } = sort || {};
+        const { sortBy = "id", orderBy = "ASC" } = sort || {};
 
-        const {
-            pageNumber = 0,
-            pageLimit = 10
-        } = page || {};
+        const { pageNumber = 0, pageLimit = 10 } = page || {};
 
         const skipPagination = filter?.isSkipPagination || false;
 
@@ -113,11 +109,13 @@ class UserRepository {
             order: [[Sequelize.col(sortBy), orderBy]],
             ...(!skipPagination && {
                 offset: pageNumber * pageLimit,
-                limit: pageLimit
-            })
+                limit: pageLimit,
+            }),
         });
 
-        return skipPagination ? result.rows : getPaginationResponse(result, page);
+        return skipPagination
+            ? result.rows
+            : getPaginationResponse(result, page);
     }
 
     // Build dynamic where clause for filtering
@@ -138,7 +136,7 @@ class UserRepository {
         if (search) {
             where[Op.or] = [
                 { name: { [Op.iLike]: `%${search}%` } },
-                { email: { [Op.iLike]: `%${search}%` } }
+                { email: { [Op.iLike]: `%${search}%` } },
             ];
         }
 

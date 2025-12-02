@@ -1,16 +1,18 @@
 const UserRepository = require("../repository/UserRepository");
 const {
     InvalidRequestException,
-    NotFoundException
+    NotFoundException,
 } = require("../utils/Exception");
 
 const MessageConstant = require("../constant/MessageConstant");
 
 class UserService {
-
     // Create User
     async addUser(data) {
-        if (!data) throw new InvalidRequestException(MessageConstant.INVALID_REQUEST_DESCRIPTION);
+        if (!data)
+            throw new InvalidRequestException(
+                MessageConstant.INVALID_REQUEST_DESCRIPTION,
+            );
 
         const user = await UserRepository.addUser(data);
         return { id: user.id, ...user.dataValues };
@@ -28,7 +30,9 @@ class UserService {
         // Get user by email
         const user = await UserRepository.loginUser(email);
         if (!user) {
-            throw new InvalidRequestException("User does not exist with this email");
+            throw new InvalidRequestException(
+                "User does not exist with this email",
+            );
         }
 
         // Role mismatch
@@ -46,13 +50,16 @@ class UserService {
             id: user.id,
             name: user.name,
             email: user.email,
-            role: user.role
+            role: user.role,
         };
     }
 
     // Get user by ID
     async getUserById(id) {
-        if (!id) throw new InvalidRequestException(MessageConstant.INVALID_REQUEST_DESCRIPTION);
+        if (!id)
+            throw new InvalidRequestException(
+                MessageConstant.INVALID_REQUEST_DESCRIPTION,
+            );
 
         const user = await UserRepository.getUserById(id);
 
@@ -65,7 +72,10 @@ class UserService {
 
     // Update User
     async updateUserById(id, data) {
-        if (!id || !data) throw new InvalidRequestException(MessageConstant.INVALID_REQUEST_DESCRIPTION);
+        if (!id || !data)
+            throw new InvalidRequestException(
+                MessageConstant.INVALID_REQUEST_DESCRIPTION,
+            );
 
         const updated = await UserRepository.updateUserById(id, data);
 
@@ -75,7 +85,10 @@ class UserService {
 
     // Soft Delete User
     async deleteUserById(id) {
-        if (!id) throw new InvalidRequestException(MessageConstant.INVALID_REQUEST_DESCRIPTION);
+        if (!id)
+            throw new InvalidRequestException(
+                MessageConstant.INVALID_REQUEST_DESCRIPTION,
+            );
 
         return await UserRepository.deleteUserById(id);
     }

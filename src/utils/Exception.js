@@ -38,5 +38,5 @@ module.exports = {
     InvalidRequestException,
     NotFoundException,
     UnAuthorizeException,
-    InternalServerException
+    InternalServerException,
 };

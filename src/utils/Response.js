@@ -1,4 +1,4 @@
-const MessageConstant = require('../constant/MessageConstant');
+const MessageConstant = require("../constant/MessageConstant");
 
 class Response {
     constructor(code, status, description) {
@@ -15,8 +15,8 @@ function getOkResponse(message) {
 function getCreatedResponse(message) {
     return new Response(201, MessageConstant.CREATED, message);
 }
-function getUpdatedResponse(message){
-    return new Response(201, MessageConstant.UPDATED, message)
+function getUpdatedResponse(message) {
+    return new Response(201, MessageConstant.UPDATED, message);
 }
 function getInvalidRequestResponse(message) {
     return new Response(400, MessageConstant.ERROR, message);
@@ -31,7 +31,11 @@ function getUnAuthorizeResponse(message) {
 }
 
 function getInternalServerErrorResponse() {
-    return new Response(500, MessageConstant.ERROR, MessageConstant.SOMETHING_WENT_WRONG);
+    return new Response(
+        500,
+        MessageConstant.ERROR,
+        MessageConstant.SOMETHING_WENT_WRONG,
+    );
 }
 
 function getPaginationResponse(data, page) {
@@ -42,7 +46,7 @@ function getPaginationResponse(data, page) {
         content: data?.rows || [],
         pageable: { pageNumber, pageLimit },
         totalElements,
-        totalPages: Math.ceil(totalElements / pageLimit)
+        totalPages: Math.ceil(totalElements / pageLimit),
     };
 }
 
@@ -54,5 +58,5 @@ module.exports = {
     getNotFoundResponse,
     getInternalServerErrorResponse,
     getUnAuthorizeResponse,
-    getPaginationResponse
+    getPaginationResponse,
 };

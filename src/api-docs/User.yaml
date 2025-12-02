@@ -151,7 +151,6 @@ paths:
 
 components:
   schemas:
-
     UserModel:
       type: object
       properties:
