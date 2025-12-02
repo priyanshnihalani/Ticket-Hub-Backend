@@ -29,10 +29,20 @@ class TicketRepository {
     }
 
     getAllTicket = async () => {
+        const today = new Date();
+
         return await Ticket.findAll({
             where: { softDelete: false },
             include: [
-                { model: Event, as: 'event' },
+                {
+                    model: Event, as: 'event',
+                    where: {
+                        active: true,
+                        date: {
+                            [Sequelize.Op.gt]: today
+                        }
+                    }
+                },
                 { model: User, as: 'user' }
             ]
         });

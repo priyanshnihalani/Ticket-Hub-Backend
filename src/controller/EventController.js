@@ -90,7 +90,9 @@ class EventController {
 
     getAllEvent = async (req, res, next) => {
         try {
-            const result = await EventService.getAllEvent();
+            const { isAdminEvent } = req.body
+            console.log(isAdminEvent)
+            const result = await EventService.getAllEvent(isAdminEvent);
 
             if (!result?.success) {
                 return ResponseManager.GeneralResponse(

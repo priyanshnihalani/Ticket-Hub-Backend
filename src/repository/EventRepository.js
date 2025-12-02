@@ -30,7 +30,9 @@ class EventRepository {
         })
     }
 
-    getAllEvent = async () => {
+    getAllEvent = async (isAdminEvent) => {
+        const today = new Date()
+
         const totalBookings = await Ticket.count({
             where: { softDelete: false }
         });
@@ -40,11 +42,25 @@ class EventRepository {
         });
 
         const events = await Event.findAll({
-            where: { softDelete: false },
+            where: {
+                softDelete: false, ...(isAdminEvent ? {} : { active: true }),
+                ...(isAdminEvent ? {} : {date: {[Sequelize.Op.gt]: today}})
+            },
 
             attributes: {
                 include: [
                     // Total seats booked (SAFE SUBQUERY)
+                    [
+                        Sequelize.literal(`
+                        (
+                            SELECT COALESCE(SUM(json_array_length(t."seats")), 0)
+                            FROM tickets t
+                            WHERE t."eventId" = events.id 
+                            AND t."softDelete" = true
+                        )
+                    `),
+                        "cancelledCount"
+                    ],
                     [
                         Sequelize.literal(`
                         (
