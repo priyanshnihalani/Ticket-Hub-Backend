@@ -35,26 +35,79 @@ class EventRepository {
         });
     };
 
-    getAllEvent = async (isAdminEvent) => {
-        const today = new Date()
+    getAllEvent = async (isAdminEvent, date) => {
+        const now = new Date();
 
-        const totalBookings = await Ticket.count({
+        const startOfToday = new Date();
+        startOfToday.setHours(0, 0, 0, 0);
+
+        const endOfToday = new Date();
+        endOfToday.setHours(23, 59, 59, 999);
+
+        const totalBookings = await Ticket.findOne({
+            attributes: [
+                [
+                    Sequelize.literal(`
+                COALESCE(SUM(json_array_length(tickets."seats")), 0)
+            `),
+                    "totalSeatsBooked"   // ✔ correct alias
+                ]
+            ],
+            include: [
+                {
+                    model: Event,
+                    as: "event",
+                    attributes: [],
+                    required: true,
+                    where: { date: { [Sequelize.Op.gte]: startOfToday } }
+                }
+            ],
             where: { softDelete: false },
+            raw: true
         });
 
-        const totalRevenue = await Ticket.sum("price", {
+
+        const totalRevenue = await Ticket.findOne({
+            attributes: [
+                [
+                    Sequelize.literal(`
+                COALESCE(SUM(tickets."price"), 0)
+            `),
+                    "totalRevenue"
+                ]
+            ],
+            include: [
+                {
+                    model: Event,
+                    as: "event",
+                    attributes: [],
+                    required: true,
+                    where: { date: { [Sequelize.Op.gte]: startOfToday } }
+                }
+            ],
             where: { softDelete: false },
+            raw: true
         });
+
+        const whereCondition = {
+            softDelete: false,
+            ...(isAdminEvent ? {} : { active: true }),
+        };
+
+        if (date === true) {
+            whereCondition.date = {
+                [Sequelize.Op.between]: [startOfToday, endOfToday],
+            };
+        }
+        else if (!isAdminEvent) {
+            whereCondition.date = { [Sequelize.Op.gt]: now };
+        }
 
         const events = await Event.findAll({
-            where: {
-                softDelete: false, ...(isAdminEvent ? {} : { active: true }),
-                ...(isAdminEvent ? {} : {date: {[Sequelize.Op.gt]: today}})
-            },
+            where: whereCondition,
 
             attributes: {
                 include: [
-                    // Total seats booked (SAFE SUBQUERY)
                     [
                         Sequelize.literal(`
                         (
@@ -64,7 +117,7 @@ class EventRepository {
                             AND t."softDelete" = true
                         )
                     `),
-                        "cancelledCount"
+                        "cancelledCount",
                     ],
                     [
                         Sequelize.literal(`
@@ -77,8 +130,6 @@ class EventRepository {
                     `),
                         "bookingCount",
                     ],
-
-                    // Total revenue (SAFE SUBQUERY)
                     [
                         Sequelize.literal(`
                         (
@@ -90,8 +141,6 @@ class EventRepository {
                     `),
                         "bookingPrice",
                     ],
-
-                    // Seats array from Ticket (SAFE SUBQUERY)
                     [
                         Sequelize.literal(`
                         (
@@ -110,8 +159,8 @@ class EventRepository {
         });
 
         return {
-            totalBookings,
-            totalRevenue,
+            totalBookings: Number(totalBookings.totalSeatsBooked),
+            totalRevenue: Number(totalRevenue.totalRevenue),
             events,
         };
     };
