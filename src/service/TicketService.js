@@ -90,80 +90,45 @@ class TicketService {
         }
     }
 
-    async exportExcelTickets(req) {
-        try {
-            // Get all ticket data
-            const result = await TicketRepository.getTicketListByFilterSort(
-                { filter: req?.filter, isSkipPagination: true },
-                req?.sort,
-            );
-            if (!result?.length)
-                throw new NotFoundException(MessageConstant.NO_DATA_FOUND);
-            // Create workbook & sheet
-            const workbook = new ExcelJS.Workbook();
-            const worksheet = workbook.addWorksheet("Tickets");
-            // Define Excel columns
-            worksheet.columns = [
-                { header: "Sr No.", width: 5 },
-                { header: "Event Name", width: 25 },
-                {
-                    header: "Event Date",
-                    width: 15,
-                    style: { numFmt: "dd-mm-yyyy" },
-                },
-                { header: "Event Time", width: 12 },
-                { header: "No. of Tickets", width: 15 },
-                { header: "Price", width: 15, style: { numFmt: "0.00" } },
-            ];
-            // Add rows
-            const formatTime = (timeString) => {
-                if (!timeString) return "N/A";
-                const [hours, minutes] = timeString.split(":");
-                const date = new Date();
-                date.setHours(hours);
-                date.setMinutes(minutes);
-                return date.toLocaleTimeString("en-IN", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    hour12: true,
-                });
-            };
-            const formatDate = (isoDate) => {
-                if (!isoDate) return "N/A";
-                return new Date(isoDate).toLocaleDateString("en-IN", {
-                    day: "2-digit",
-                    month: "short",
-                    year: "numeric",
-                });
-            };
+    async exportExcelTickets(ticketData) {
+        const tickets = Array.isArray(ticketData)
+            ? ticketData
+            : [ticketData];
 
-            result.forEach((t, idx) => {
-                const plainData = t.get({ plain: true });
-
-                const eventDate = formatDate(plainData?.event?.date);
-                const eventTime = formatTime(plainData?.event?.time);
-
-                worksheet.addRow([
-                    idx + 1,
-                    plainData?.event?.title || "N/A",
-                    eventDate,
-                    eventTime,
-                    plainData?.seats,
-                    plainData?.price,
-                ]);
-            });
-            // Set header bold
-            worksheet.getRow(1).font = { bold: true };
-            const buffer = await workbook.xlsx.writeBuffer();
-            if (!buffer)
-                throw new InvalidRequestException(
-                    MessageConstant.NO_DATA_FOUND,
-                );
-            return buffer;
-        } catch (error) {
-            throw error;
+        if (!tickets.length) {
+            throw new NotFoundException("No ticket data received");
         }
+
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet("Tickets");
+
+        worksheet.columns = [
+            { header: "Sr No.", width: 8 },
+            { header: "User Name", width: 12 },
+            { header: "Event Name", width: 25 },
+            { header: "Event Date", width: 18 },
+            { header: "Event Time", width: 15 },
+            { header: "Tickets", width: 20 },
+            { header: "Status", width: 15 },
+        ];
+
+        tickets.forEach((ticket, index) => {
+            worksheet.addRow([
+                index + 1,
+                ticket.user || "N/A",
+                ticket.eventName || ticket.event || "N/A",
+                ticket.date || "N/A",
+                ticket.time || "N/A",
+                ticket.tickets || "N/A",
+                ticket.status || "N/A",
+            ]);
+        });
+
+        worksheet.getRow(1).font = { bold: true };
+
+        return workbook.xlsx.writeBuffer();
     }
+
 }
 
 module.exports = new TicketService();

@@ -62,9 +62,9 @@ class EventService {
         }
     }
 
-    async getAllEvent(isAdminEvent, date) {
+    async getAllEvent(isAdminEvent, isEventPage) {
         try {
-            const result = await EventRepository.getAllEvent(isAdminEvent, date);
+            const result = await EventRepository.getAllEvent(isAdminEvent, isEventPage);
             return { success: true, body: result }
         } catch (error) {
             throw error;

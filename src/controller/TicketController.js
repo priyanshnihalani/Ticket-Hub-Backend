@@ -110,8 +110,12 @@ class TicketController {
                 "Content-Disposition",
                 'attachment; filename="Tickets.xlsx"',
             );
-            res.setHeader("Content-Type", "application/vnd.ms-excel");
-            return res.end(buffer, "binary");
+            res.setHeader(
+                "Content-Type",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            );
+
+            return res.status(200).send(buffer);
         } catch (error) {
             console.log("Error in exportExcelTickets:", error);
             next(error);

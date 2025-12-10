@@ -35,112 +35,57 @@ class EventRepository {
         });
     };
 
-    getAllEvent = async (isAdminEvent, date) => {
+    getAllEvent = async (isAdminEvent, isEventPage) => {
         const now = new Date();
-
-        const startOfToday = new Date();
-        startOfToday.setHours(0, 0, 0, 0);
-
-        const endOfToday = new Date();
-        endOfToday.setHours(23, 59, 59, 999);
-
-        const totalBookings = await Ticket.findOne({
-            attributes: [
-                [
-                    Sequelize.literal(`
-                COALESCE(SUM(json_array_length(tickets."seats")), 0)
-            `),
-                    "totalSeatsBooked"   // ✔ correct alias
-                ]
-            ],
-            include: [
-                {
-                    model: Event,
-                    as: "event",
-                    attributes: [],
-                    required: true,
-                    where: { date: { [Sequelize.Op.gte]: startOfToday } }
-                }
-            ],
-            where: { softDelete: false },
-            raw: true
-        });
-
-
-        const totalRevenue = await Ticket.findOne({
-            attributes: [
-                [
-                    Sequelize.literal(`
-                COALESCE(SUM(tickets."price"), 0)
-            `),
-                    "totalRevenue"
-                ]
-            ],
-            include: [
-                {
-                    model: Event,
-                    as: "event",
-                    attributes: [],
-                    required: true,
-                    where: { date: { [Sequelize.Op.gte]: startOfToday } }
-                }
-            ],
-            where: { softDelete: false },
-            raw: true
-        });
+        const last24Hours = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
         const whereCondition = {
             softDelete: false,
             ...(isAdminEvent ? {} : { active: true }),
         };
 
-        if (date === true) {
-            whereCondition.date = {
-                [Sequelize.Op.between]: [startOfToday, endOfToday],
-            };
-        }
-        else if (!isAdminEvent) {
+        if (!isAdminEvent) {
             whereCondition.date = { [Sequelize.Op.gt]: now };
         }
 
+        const apply24HoursFilter = isAdminEvent && !isEventPage;
+
+        const timeCondition = apply24HoursFilter
+            ? `AND t."createdAt" >= '${last24Hours.toISOString()}'`
+            : "";
+
+        const totalBookings = await Ticket.findOne({
+            attributes: [[
+                Sequelize.literal(`COALESCE(SUM(json_array_length("seats")), 0)`),
+                "totalSeatsBooked"
+            ]],
+            where: {
+                softDelete: false,
+                ...(apply24HoursFilter && {
+                    createdAt: { [Sequelize.Op.gte]: last24Hours }
+                })
+            },
+            raw: true
+        });
+
+        const totalRevenue = await Ticket.findOne({
+            attributes: [[
+                Sequelize.literal(`COALESCE(SUM("price"), 0)`),
+                "totalRevenue"
+            ]],
+            where: {
+                softDelete: false,
+                ...(apply24HoursFilter && {
+                    createdAt: { [Sequelize.Op.gte]: last24Hours }
+                })
+            },
+            raw: true
+        });
+
         const events = await Event.findAll({
             where: whereCondition,
-
             attributes: {
                 include: [
-                    [
-                        Sequelize.literal(`
-                        (
-                            SELECT COALESCE(SUM(json_array_length(t."seats")), 0)
-                            FROM tickets t
-                            WHERE t."eventId" = events.id 
-                            AND t."softDelete" = true
-                        )
-                    `),
-                        "cancelledCount",
-                    ],
-                    [
-                        Sequelize.literal(`
-                        (
-                            SELECT COALESCE(SUM(json_array_length(t."seats")), 0)
-                            FROM tickets t
-                            WHERE t."eventId" = events.id 
-                            AND t."softDelete" = false
-                        )
-                    `),
-                        "bookingCount",
-                    ],
-                    [
-                        Sequelize.literal(`
-                        (
-                            SELECT COALESCE(SUM(t."price"), 0)
-                            FROM tickets t
-                            WHERE t."eventId" = events.id
-                            AND t."softDelete" = false
-                        )
-                    `),
-                        "bookingPrice",
-                    ],
                     [
                         Sequelize.literal(`
                         (
@@ -152,16 +97,51 @@ class EventRepository {
                     `),
                         "allSeats",
                     ],
-                ],
+                    [
+                        Sequelize.literal(`
+                        (
+                            SELECT COALESCE(SUM(json_array_length(t."seats")), 0)
+                            FROM tickets t
+                            WHERE t."eventId" = events.id
+                            AND t."softDelete" = false
+                            ${timeCondition}
+                        )
+                    `),
+                        "bookingCount"
+                    ],
+                    [
+                        Sequelize.literal(`
+                        (
+                            SELECT COALESCE(SUM(json_array_length(t."seats")), 0)
+                            FROM tickets t
+                            WHERE t."eventId" = events.id
+                            AND t."softDelete" = true
+                            ${timeCondition}
+                        )
+                    `),
+                        "cancelledCount"
+                    ],
+                    [
+                        Sequelize.literal(`
+                        (
+                            SELECT COALESCE(SUM(t."price"), 0)
+                            FROM tickets t
+                            WHERE t."eventId" = events.id
+                            AND t."softDelete" = false
+                            ${timeCondition}
+                        )
+                    `),
+                        "bookingRevenue"
+                    ]
+                ]
             },
-
             order: [["id", "ASC"]],
         });
 
         return {
             totalBookings: Number(totalBookings.totalSeatsBooked),
             totalRevenue: Number(totalRevenue.totalRevenue),
-            events,
+            events
         };
     };
 
