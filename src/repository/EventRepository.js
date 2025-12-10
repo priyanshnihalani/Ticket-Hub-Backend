@@ -55,31 +55,37 @@ class EventRepository {
             : "";
 
         const totalBookings = await Ticket.findOne({
-            attributes: [[
-                Sequelize.literal(`COALESCE(SUM(json_array_length("seats")), 0)`),
-                "totalSeatsBooked"
-            ]],
+            attributes: [
+                [
+                    Sequelize.literal(
+                        `COALESCE(SUM(json_array_length("seats")), 0)`,
+                    ),
+                    "totalSeatsBooked",
+                ],
+            ],
             where: {
                 softDelete: false,
                 ...(apply24HoursFilter && {
-                    createdAt: { [Sequelize.Op.gte]: last24Hours }
-                })
+                    createdAt: { [Sequelize.Op.gte]: last24Hours },
+                }),
             },
-            raw: true
+            raw: true,
         });
 
         const totalRevenue = await Ticket.findOne({
-            attributes: [[
-                Sequelize.literal(`COALESCE(SUM("price"), 0)`),
-                "totalRevenue"
-            ]],
+            attributes: [
+                [
+                    Sequelize.literal(`COALESCE(SUM("price"), 0)`),
+                    "totalRevenue",
+                ],
+            ],
             where: {
                 softDelete: false,
                 ...(apply24HoursFilter && {
-                    createdAt: { [Sequelize.Op.gte]: last24Hours }
-                })
+                    createdAt: { [Sequelize.Op.gte]: last24Hours },
+                }),
             },
-            raw: true
+            raw: true,
         });
 
         const events = await Event.findAll({
@@ -107,7 +113,7 @@ class EventRepository {
                             ${timeCondition}
                         )
                     `),
-                        "bookingCount"
+                        "bookingCount",
                     ],
                     [
                         Sequelize.literal(`
@@ -119,7 +125,7 @@ class EventRepository {
                             ${timeCondition}
                         )
                     `),
-                        "cancelledCount"
+                        "cancelledCount",
                     ],
                     [
                         Sequelize.literal(`
@@ -131,9 +137,9 @@ class EventRepository {
                             ${timeCondition}
                         )
                     `),
-                        "bookingRevenue"
-                    ]
-                ]
+                        "bookingRevenue",
+                    ],
+                ],
             },
             order: [["id", "ASC"]],
         });
@@ -141,7 +147,7 @@ class EventRepository {
         return {
             totalBookings: Number(totalBookings.totalSeatsBooked),
             totalRevenue: Number(totalRevenue.totalRevenue),
-            events
+            events,
         };
     };
 
@@ -200,7 +206,7 @@ class EventRepository {
         if (ids) whereClause.id = ids;
         if (userIds) whereClause.userId = userIds;
         if (statuses) whereClause.status = statuses;
-        if (inActive != null) whereClause.inActive = inActive;
+        if (inActive != null) whereClause.active = inActive;
 
         whereClause[Op.and] = [];
 

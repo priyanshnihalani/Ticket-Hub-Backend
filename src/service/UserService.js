@@ -1,4 +1,5 @@
 const UserRepository = require("../repository/UserRepository");
+const bcrypt = require("bcrypt");
 const {
     InvalidRequestException,
     NotFoundException,
@@ -9,13 +10,16 @@ const MessageConstant = require("../constant/MessageConstant");
 class UserService {
     // Create User
     async addUser(data) {
+        // validate data
         if (!data)
             throw new InvalidRequestException(
                 MessageConstant.INVALID_REQUEST_DESCRIPTION,
             );
-
-        const user = await UserRepository.addUser(data);
-        return { id: user.id, ...user.dataValues };
+        // convert password in becrypt
+        const hashedPassword = await bcrypt.hash(data.password, 10);
+        data.password = hashedPassword;
+        // store data into and return it
+        return await UserRepository.addUser(data);
     }
 
     // Login User
@@ -41,7 +45,8 @@ class UserService {
         }
 
         // Password check (plain text in your DB)
-        if (password !== user.password) {
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        if (!isPasswordValid) {
             throw new InvalidRequestException("Incorrect password");
         }
 

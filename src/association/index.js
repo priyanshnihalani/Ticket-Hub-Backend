@@ -9,3 +9,13 @@ Ticket.belongsTo(User, { foreignKey: "userId", as: "user" });
 // EVENT → TICKET
 Event.hasMany(Ticket, { foreignKey: "eventId", as: "tickets" });
 Ticket.belongsTo(Event, { foreignKey: "eventId", as: "event" });
+
+Event.belongsTo(User, {
+    foreignKey: "createdBy",
+    as: "user",
+});
+
+User.hasMany(Event, {
+    foreignKey: "createdBy",
+    as: "events",
+});
