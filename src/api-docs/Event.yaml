@@ -1,13 +1,3 @@
-openapi: 3.0.1
-info:
-  title: Event Management API
-  version: 1.0.0
-  description: API documentation for Event CRUD operations
-
-servers:
-  - url: http://localhost:3000
-    description: Local server
-
 tags:
   - name: Events
     description: Event management APIs
